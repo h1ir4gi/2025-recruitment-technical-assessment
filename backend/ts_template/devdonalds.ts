@@ -115,10 +115,12 @@ app.get("/summary", (req: Request, res: Request) => {
       .json({ error: "Error: provided name is not a valid recipe" });
   }
 
-  // process recipe entries
-  for (const requiredItem of recipe.requiredItems) {
+  const toProcess = [...recipe.requiredItems];
+
+  while (toProcess.length > 0) {
+    const requiredItem = toProcess.pop();
     const entryInCookbook = cookbook.get(requiredItem.name);
-    // check if the entry exists in the cookbook, if not return error
+
     if (!entryInCookbook) {
       return res
         .status(400)
@@ -127,35 +129,28 @@ app.get("/summary", (req: Request, res: Request) => {
 
     if (entryInCookbook.type == INGREDIENT) {
       const existingIngredient = ingredientMap.get(entryInCookbook.name);
-      if (!existingIngredient) {
-        // if the entry is an ingredient and is not yet in the summary, 
-        // add the ingredient to the summary. 
+      if (existingIngredient) {
+        // if it already exists in the summary, increment its quantity.
+        existingIngredient.quantity += requiredItem.quantity;
+      } else {
+        // if the entry is an ingredient and is not yet in the summary,
+        // add the ingredient to the summary.
         ingredientMap.set(entryInCookbook.name, {
           name: entryInCookbook.name,
           quantity: requiredItem.quantity,
         });
-      } else {
-        // if it already exists in the summary, increment its quantity. 
-        existingIngredient.quantity += requiredItem.quantity;
       }
 
       // add the ingredients' cook time to the total cook time;
       summary.cookTime += (entryInCookbook as ingredient).cookTime;
     } else {
-      // if it is a recipe, scale the quantities of its requiredItems by
-      // the quantity of the recipe. 
-      const quantityScaledItems = (entryInCookbook as recipe).requiredItems.map(
-        (item) => {
-          return {
-            ...item,
-            quantity: item.quantity * requiredItem.quantity,
-          };
-        }
-      );
-
-      // dynamically add the required items of the recipe to recipe.requiredItems
-      // so further items will be iterated through in the loop 
-      recipe.requiredItems.push(...quantityScaledItems);
+      // push all the required items in the recipe to the stack
+      (entryInCookbook as recipe).requiredItems.forEach((item) => {
+        toProcess.push({
+          name: item.name,
+          quantity: item.quantity * requiredItem.quantity,
+        });
+      });
     }
   }
 
@@ -171,54 +166,3 @@ const port = 8080;
 app.listen(port, () => {
   console.log(`Running on: http://127.0.0.1:8080`);
 });
-
-// app.get("/summary", (req: Request, res: Request) => {
-//   const name = req.query.name as string;
-//   const recipeInCookbook = cookbook.get(name);
-
-//   if (recipeInCookbook.type === INGREDIENT) {
-//     return res
-//       .status(400)
-//       .json({ error: "Error: recipe provided is not a valid recipe" });
-//   }
-
-//   const summary: recipeSummary = {
-//     name,
-//     cookTime: 0,
-//     ingredients: [],
-//   };
-
-//   const generateRecipeSummary = (entry: requiredItem) => {
-//     const entryInCookbook = cookbook.get(entry.name);
-
-//     if (!entryInCookbook) {
-//       return res
-//         .status(400)
-//         .json({ error: "Error: entry required is not in the cookbook" });
-//     }
-
-//     if (entryInCookbook.type === INGREDIENT) {
-//       const ingredientIdx = summary.ingredients.findIndex(
-//         (item) => item.name === entryInCookbook.name
-//       );
-//       if (ingredientIdx === -1) {
-//         summary.ingredients.push({
-//           name: entryInCookbook.name,
-//           quantity: entry.quantity,
-//         });
-//       } else {
-//         summary.ingredients[ingredientIdx].quantity += entry.quantity;
-//       }
-//       summary.cookTime += (entryInCookbook as ingredient).cookTime;
-//     } else {
-//       for (const requiredItem of (entryInCookbook as recipe).requiredItems) {
-//         generateRecipeSummary(requiredItem);
-//       }
-//     }
-//   };
-
-//   for (const requiredItem of (recipeInCookbook as recipe).requiredItems) {
-//     generateRecipeSummary(requiredItem);
-//   }
-//   res.status(200).json(summary);
-// });

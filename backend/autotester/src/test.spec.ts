@@ -247,7 +247,6 @@ describe("Task 3", () => {
         tomato,
       ]) {
         const resp1 = await postEntry(entry);
-        console.log(resp1.body)
         expect(resp1.status).toBe(200);
       }
 
@@ -257,12 +256,13 @@ describe("Task 3", () => {
         { name: "Flour", quantity: 3 },
         { name: "Egg", quantity: 4 },
         { name: "Tomato", quantity: 2 },
-      ].sort((a, b) => a.name.localeCompare(b.name));
+      ]?.sort((a, b) => a.name.localeCompare(b.name));
       
-      const sortedResponseIngredients = resp3.body.ingredients.sort((a, b) =>
+      const sortedResponseIngredients = resp3.body.ingredients?.sort((a, b) =>
         a.name.localeCompare(b.name)
       );
-            expect(sortedResponseIngredients).toStrictEqual(sortedExpectedIngredients);
+      console.log(resp3.body)
+      expect(sortedResponseIngredients).toStrictEqual(sortedExpectedIngredients);
 
       expect(resp3.status).toBe(200);
     });
