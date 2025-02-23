@@ -18,6 +18,11 @@ describe("Task 1", () => {
       expect(response.body).toStrictEqual({ msg: "Alpha Alfredo" });
     });
 
+    it("example3", async () => {
+      const response = await getTask1("Skibidi___-spaGhetti  ");
+      expect(response.body).toStrictEqual({ msg: "Skibidi Spaghetti" });
+    });
+
     it("error case", async () => {
       const response = await getTask1("");
       expect(response.status).toBe(400);
@@ -155,6 +160,110 @@ describe("Task 3", () => {
       expect(resp2.status).toBe(200);
 
       const resp3 = await getTask3("Skibidi");
+      expect(resp3.status).toBe(200);
+    });
+
+    it("Skibidi recipe test", async () => {
+      const skibidiSpaghetti = {
+        type: "recipe",
+        name: "Skibidi Spaghetti",
+        requiredItems: [
+          {
+            name: "Meatball",
+            quantity: 3,
+          },
+          {
+            name: "Pasta",
+            quantity: 1,
+          },
+          {
+            name: "Tomato",
+            quantity: 2,
+          },
+        ],
+      };
+
+      const meatball = {
+        type: "recipe",
+        name: "Meatball",
+        requiredItems: [
+          {
+            name: "Beef",
+            quantity: 2,
+          },
+          {
+            name: "Egg",
+            quantity: 1,
+          },
+        ],
+      };
+
+      const pasta = {
+        type: "recipe",
+        name: "Pasta",
+        requiredItems: [
+          {
+            name: "Flour",
+            quantity: 3,
+          },
+          {
+            name: "Egg",
+            quantity: 1,
+          },
+        ],
+      };
+
+      const beef = {
+        type: "ingredient",
+        name: "Beef",
+        cookTime: 5,
+      };
+
+      const egg = {
+        type: "ingredient",
+        name: "Egg",
+        cookTime: 3,
+      };
+
+      const flour = {
+        type: "ingredient",
+        name: "Flour",
+        cookTime: 0,
+      };
+
+      const tomato = {
+        type: "ingredient",
+        name: "Tomato",
+        cookTime: 2,
+      };
+
+      for (const entry of [
+        skibidiSpaghetti,
+        egg,
+        beef,
+        meatball,
+        pasta,
+        flour,
+        tomato,
+      ]) {
+        const resp1 = await postEntry(entry);
+        console.log(resp1.body)
+        expect(resp1.status).toBe(200);
+      }
+
+      const resp3 = await getTask3("Skibidi Spaghetti");
+      const sortedExpectedIngredients = [
+        { name: "Beef", quantity: 6 },
+        { name: "Flour", quantity: 3 },
+        { name: "Egg", quantity: 4 },
+        { name: "Tomato", quantity: 2 },
+      ].sort((a, b) => a.name.localeCompare(b.name));
+      
+      const sortedResponseIngredients = resp3.body.ingredients.sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+            expect(sortedResponseIngredients).toStrictEqual(sortedExpectedIngredients);
+
       expect(resp3.status).toBe(200);
     });
   });
